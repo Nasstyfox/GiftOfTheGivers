@@ -1,5 +1,6 @@
 name: Deploy Donation Function App
 
+
 on:
   push:
     branches:
@@ -27,8 +28,9 @@ jobs:
       - name: 'Build and Publish Project'
         shell: pwsh
         run: |
-          dotnet build **/*.csproj --configuration Release
-          dotnet publish **/*.csproj --configuration Release --output './publish'
+          $proj = (Get-ChildItem -Recurse -Filter *.csproj).FullName
+                    dotnet build $proj --configuration Release
+                    dotnet publish $proj --configuration Release --output './publish'
 
       - name: 'Deploy to Azure Function'
         uses: Azure/functions-action@v1
