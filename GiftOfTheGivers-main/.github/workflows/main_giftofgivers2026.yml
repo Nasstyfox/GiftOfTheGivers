@@ -1,39 +1,28 @@
-name: Build and deploy .NET Function App - DonationFunctionApp
+trigger:
+- master
 
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+pool:
+  name: 'Default'  # Uses your self-hosted agent to bypass Azure parallelism limits
 
-env:
-  AZURE_FUNCTIONAPP_NAME: 'DonationFunctionApp' # Your function app name
-  DOTNET_VERSION: '8.0'                        # Adjust to 9.0 if your project uses .NET 9
+variables:
+  azureServiceConnection: 'sub-ter-rcwcct-rosebankcollege-studrsg-dts-001'  # The service connection created in Project Settings
+  functionAppName: 'DonationFunctionApp'
+  buildConfiguration: 'Release'
 
-jobs:
-  build-and-deploy:
-    runs-on: windows-latest
-    steps:
-      - name: 'Checkout GitHub Action'
-        uses: actions/checkout@v4
+steps:
+- task: DotNetCoreCLI@2
+  displayName: 'Build & Publish Project'
+  inputs:
+    command: 'publish'
+    publishWebProjects: false
+    projects: '**/*.csproj'
+    arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+    zipAfterPublish: true
 
-      - name: 'Setup DotNet ${{ env.DOTNET_VERSION }} Environment'
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: ${{ env.DOTNET_VERSION }}
-
-      - name: 'Resolve Project Dependencies Using DotNet'
-        shell: pwsh
-        run: |
-          pushd './'
-          dotnet build --configuration Release
-          dotnet publish --configuration Release --output './output'
-          popd
-
-      - name: 'Run Azure Functions Action'
-        uses: Azure/functions-action@v1
-        id: fa
-        with:
-          app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
-          package: './output'
-          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
+- task: AzureFunctionApp@1
+  displayName: 'Deploy to Azure Function App'
+  inputs:
+    azureSubscription: '$(azureServiceConnection)'
+    appType: 'functionApp'
+    appName: '$(functionAppName)'
+    package: '$(Build.ArtifactStagingDirectory)/*.zip'
