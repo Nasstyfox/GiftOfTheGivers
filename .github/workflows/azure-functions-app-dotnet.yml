@@ -9,7 +9,7 @@ on:
 
 env:
   AZURE_FUNCTIONAPP_NAME: 'DonationFunctionApp'
-  DOTNET_VERSION: '8.0' # Change to '9.0' if your C# project uses .NET 9
+  DOTNET_VERSION: '9.0' # Change to '9.0' if your C# project uses .NET 9
 
 jobs:
   build-and-deploy:
